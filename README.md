@@ -90,6 +90,6 @@ This playbook runs the `docker system prune` command
 docker system prune --all
 ```
 
-The `docker system prune command` is a shortcut that prunes `images`, `containers`, and `networks` for any containers not currently running.
+The `docker system prune` command is a shortcut that prunes `images`, `containers`, and `networks` for any containers not currently running.
 
 [return to top](#table-of-contents)
