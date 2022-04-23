@@ -12,6 +12,8 @@ This is a collection of `Ansible` playbooks to use for the automating of Linux h
 
 This should work for hosts running `Debian` or `Ubuntu` or any other `APT` packaged managed operating systems.
 
+It is meant to be run from `Ansible Tower` or `AWX-Operator` environments, however they can be easily adapted to run with an inventory and `Ansible-Core` CLI environments as well.
+
 ---
 
 ## Update Packages
