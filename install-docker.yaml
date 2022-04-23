@@ -1,0 +1,79 @@
+---
+- name: Install Docker on an Ubuntu box
+  hosts: all
+  become: yes
+  become_user: root
+  gather_facts: true
+
+  tasks:
+
+  - name: Uninstall old versions of Docker
+    apt: 
+      name: "{{ item }}" 
+      state: absent
+    loop: 
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+      - docker-compose
+
+  - name: Add Docker GPG apt Key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  - name: Add Docker APT repository
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+      state: present
+
+  - name: Install Docker
+    apt: 
+      name: "{{ item }}" 
+      state: latest
+      update_cache: yes
+    loop: 
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+
+  - name: check docker is active
+    service:
+      name: docker
+      state: started
+      enabled: yes
+
+  - name: Create docker group
+    group:
+      name: docker
+      state: present
+
+  - name: Adding user to docker group
+    user:
+      name: brian                      # <--- change name to whatever you desire
+      groups: docker
+      append: yes
+
+  - name: Test Docker with hello world example
+    shell: "docker run hello-world"
+    register: hello_world_output
+
+  - name: Show output of hello word example
+    debug:
+      msg: "Container Output: {{hello_world_output.stdout}}"
+
+  - name: Install prerequisites for docker-compose
+    apt:
+      name: "{{ item }}" 
+      state: present
+      update_cache: yes
+    loop: 
+      - python3-pip
+      - python3-setuptools
+      - virtualenv
+
+  - name: Install docker-compose
+    pip:
+      name: docker-compose

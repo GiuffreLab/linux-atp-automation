@@ -1,0 +1,28 @@
+---
+- name: Perform updates to all lab nodes
+  hosts: all
+  become: true
+  become_user: root
+  gather_facts: false
+
+  tasks:
+
+  - name: Update APT cache
+    apt:
+      update_cache: yes
+      cache_valid_time: 3600
+
+  - name: Install system tools
+    apt: 
+      name: "{{ item }}" 
+      state: present
+    loop: 
+      - net-tools
+      - neofetch
+      - python3
+      - python3-pip
+      - tree
+      - git
+      - curl
+      - nano
+      - wget
