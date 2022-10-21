@@ -26,3 +26,4 @@
       - curl
       - nano
       - wget
+      - nala
