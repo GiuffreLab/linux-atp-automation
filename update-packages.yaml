@@ -1,7 +1,7 @@
 ---
 - name: Perform updates to all lab nodes
   hosts: all
-  become: true
+#  become: true
 #  become_user: root
   gather_facts: false
 
