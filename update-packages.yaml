@@ -2,29 +2,30 @@
 - name: Perform updates to all lab nodes
   hosts: all
   become: true
-  become_user: root
+#  become_user: root
   gather_facts: false
 
   tasks:
 
-  - name: Upgrade distribution and clean / remove unused packages / dependencies
-    apt:
-      update_cache: yes
-      cache_valid_time: 3600
-      upgrade: yes
-      autoclean: yes
-      autoremove: yes
+    - name: Upgrade distribution and clean / remove unused packages / dependencies
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+        upgrade: true
+        autoclean: true
+        autoremove: true
 
-  - name: Checking if a reboot is needed
-    register: reboot_required_file
-    stat: path=/var/run/reboot-required get_md5=no
+    - name: Checking if a reboot is needed
+      ansible.builtin.stat:
+        path: /var/run/reboot-required get_md5=no
+      register: reboot_required_file
 
-  - name: Executing reboot due to kernel update
-    reboot:
-      msg: "Reboot initiated by Ansible for kernel updates"
-      connect_timeout: 5
-      reboot_timeout: 360
-      pre_reboot_delay: 0
-      post_reboot_delay: 360
-      test_command: uptime
-    when: reboot_required_file.stat.exists
+    - name: Executing reboot due to kernel update
+      ansible.builtin.reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 360
+        pre_reboot_delay: 0
+        post_reboot_delay: 360
+        test_command: uptime
+      when: reboot_required_file.stat.exists
