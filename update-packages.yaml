@@ -2,7 +2,6 @@
 - name: Perform updates to all lab nodes
   hosts: all
   gather_facts: false
-  become: true
 
   tasks:
 
