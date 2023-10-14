@@ -4,7 +4,6 @@
   gather_facts: false
 
   tasks:
-
     - name: Upgrade distribution and clean / remove unused packages / dependencies
       ansible.builtin.apt:
         update_cache: true
