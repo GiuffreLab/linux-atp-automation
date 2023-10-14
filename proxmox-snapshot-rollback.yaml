@@ -25,6 +25,7 @@
         api_password: "{{ api_password }}"
         vmid: "{{ vmid }}"
         state: started  # This will start the VM
+        timeout: 90
       register: start_result  # Register the output to a variable
 
     - name: Start the VM results
