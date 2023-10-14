@@ -2,18 +2,30 @@
 - name: Roll Back Proxmox VM to a Snapshot
   hosts: all
   gather_facts: no
-  tasks:
-    - name: Roll back to snapshot
+
+- name: Roll back to snapshot
       community.general.proxmox_snap:
         api_host: "{{ api_host }}"
         api_user: "{{ api_user }}"
         api_password: "{{ api_password }}"
         vmid: "{{ vmid }}"
-        snapname: "{{ snapshot_name }}"
-        timeout: 500
-        state: rollback
-      register: result
+        name: "{{ snapshot_name }}"
+        state: revert
+      register: rollback_result  # Register the output to a variable
 
-    - name: Print task output
-      debug:
-        var: result
+    - name: Rollback results
+      ansible.builtin.debug:
+        var: rollback_result  # Print the output of the rollback task
+
+    - name: Start the VM
+      community.general.proxmox:
+        api_host: "{{ api_host }}"
+        api_user: "{{ api_user }}"
+        api_password: "{{ api_password }}"
+        vmid: "{{ vmid }}"
+        state: started  # This will start the VM
+      register: start_result  # Register the output to a variable
+
+    - name: Start the VM results
+      ansible.builtin.debug:
+        var: start_result  # Print the output of the start VM task
