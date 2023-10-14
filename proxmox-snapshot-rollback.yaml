@@ -3,7 +3,7 @@
   hosts: all
   gather_facts: no
 
-tasks:
+  tasks:
     - name: Roll back to snapshot
       community.general.proxmox_snap:
         api_host: "{{ api_host }}"
