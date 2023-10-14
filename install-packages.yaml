@@ -1,9 +1,13 @@
 ---
-- name: Install Apt Packages
-  hosts: all
+- name: Install Apt Packages with Cache Update
+  hosts: localhost
   gather_facts: no
 
   tasks:
+    - name: Update Apt Package Cache
+      apt:
+        update_cache: yes  # Run apt-get update to update the package cache
+
     - name: Install Apt packages chosen from the survey
       apt:
         name: "{{ item }}"
