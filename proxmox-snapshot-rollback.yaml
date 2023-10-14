@@ -1,0 +1,18 @@
+---
+- name: Roll Back Proxmox VM to a Snapshot
+  gather_facts: no
+  tasks:
+    - name: Roll back to snapshot
+      community.general.proxmox_snap:
+        api_host: "{{ api_host }}"
+        api_user: "{{ api_user }}"
+        api_password: "{{ api_password }}"
+        vmid: "{{ vmid }}"
+        name: "{{ snapshot_name }}"
+        timeout: 500
+        state: rollback
+      register: result
+
+    - name: Print task output
+      debug:
+        var: result
