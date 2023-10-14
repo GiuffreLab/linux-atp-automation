@@ -1,6 +1,6 @@
 ---
 - name: Install Apt Packages with Cache Update
-  hosts: localhost
+  hosts: all
   gather_facts: no
 
   tasks:
