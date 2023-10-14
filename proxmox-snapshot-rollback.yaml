@@ -1,5 +1,6 @@
 ---
 - name: Roll Back Proxmox VM to a Snapshot
+  hosts: all
   gather_facts: no
   tasks:
     - name: Roll back to snapshot
