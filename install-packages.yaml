@@ -1,0 +1,39 @@
+---
+- name: Install Apt Packages
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Install Apt packages chosen from the survey
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ apt_packages }}"
+      when: item not in installed_packages
+
+    - name: Gather installed Apt packages
+      command: dpkg-query --show --showformat='${Package} ${Status}\n' | grep -E '^{{ apt_packages | join("$|^") }} '
+      register: dpkg_query_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print the installed Apt packages
+      debug:
+        var: dpkg_query_result.stdout_lines | map('regex_replace', '^(.+) installed.*', '\\1') | list
+      when: dpkg_query_result.rc == 0
+
+  vars:
+    apt_packages: "{{ apt_packages_input.split(',') }}"
+    installed_packages: []
+
+  pre_tasks:
+    - name: Gather installed Apt packages (pre-task)
+      command: dpkg-query --show --showformat='${Package} ${Status}\n'
+      register: dpkg_query_result_pre
+      changed_when: false
+      failed_when: false
+
+    - name: Extract installed Apt packages (pre-task)
+      set_fact:
+        installed_packages: "{{ dpkg_query_result_pre.stdout_lines | map('regex_replace', '^(.+) installed.*', '\\1') | list }}"
+      when: dpkg_query_result_pre.rc == 0
