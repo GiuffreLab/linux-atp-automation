@@ -3,13 +3,14 @@
   hosts: all
   gather_facts: no
 
-- name: Roll back to snapshot
+tasks:
+    - name: Roll back to snapshot
       community.general.proxmox_snap:
         api_host: "{{ api_host }}"
         api_user: "{{ api_user }}"
         api_password: "{{ api_password }}"
         vmid: "{{ vmid }}"
-        name: "{{ snapshot_name }}"
+        snapname: "{{ snapshot_name }}"
         state: revert
       register: rollback_result  # Register the output to a variable
 
