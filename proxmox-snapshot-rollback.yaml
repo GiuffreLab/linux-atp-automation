@@ -9,7 +9,7 @@
         api_user: "{{ api_user }}"
         api_password: "{{ api_password }}"
         vmid: "{{ vmid }}"
-        name: "{{ snapshot_name }}"
+        snapname: "{{ snapshot_name }}"
         timeout: 500
         state: rollback
       register: result
