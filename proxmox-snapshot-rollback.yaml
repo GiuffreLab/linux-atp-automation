@@ -4,34 +4,43 @@
   gather_facts: no
 
   tasks:
-
     - name: Stop the VM
       community.general.proxmox:
         api_host: "{{ api_host }}"
         api_user: "{{ api_user }}"
         api_password: "{{ api_password }}"
         vmid: "{{ vmid }}"
-        state: stopped  # This will stop the VM
+        node: "{{ node }}"  # Adding the node parameter here
+        state: stopped
         timeout: 90
-      register: stop_result  # Register the output to a variable
+      register: stop_result
 
-    - name: Stop the VM results
+    - name: Print stop VM result
       ansible.builtin.debug:
-        var: stop_result  # Print the output of the stop VM task
-    
+        var: stop_result
+
+    - name: Check if VM is stopped
+      assert:
+        that: 
+          - stop_result is success
+        fail_msg: "Stopping the VM failed. Cannot proceed with the rollback."
+        success_msg: "VM stopped successfully. Proceeding with the rollback."
+
     - name: Roll back to snapshot
       community.general.proxmox_snap:
         api_host: "{{ api_host }}"
         api_user: "{{ api_user }}"
         api_password: "{{ api_password }}"
         vmid: "{{ vmid }}"
+        node: "{{ node }}"  # Adding the node parameter here
         snapname: "{{ snapshot_name }}"
         state: rollback
-      register: rollback_result  # Register the output to a variable
+      register: rollback_result
+      when: stop_result is success  # Execute this task only if stopping the VM was successful
 
-    - name: Rollback results
+    - name: Print rollback result
       ansible.builtin.debug:
-        var: rollback_result  # Print the output of the rollback task
+        var: rollback_result
 
     - name: Start the VM
       community.general.proxmox:
@@ -39,10 +48,19 @@
         api_user: "{{ api_user }}"
         api_password: "{{ api_password }}"
         vmid: "{{ vmid }}"
-        state: started  # This will start the VM
+        node: "{{ node }}"  # Adding the node parameter here
+        state: started
         timeout: 90
-      register: start_result  # Register the output to a variable
+      register: start_result
+      when: rollback_result is success  # Execute this task only if the rollback was successful
 
-    - name: Start the VM results
+    - name: Print start VM result
       ansible.builtin.debug:
-        var: start_result  # Print the output of the start VM task
+        var: start_result
+
+    - name: Confirm if VM is started
+      assert:
+        that:
+          - start_result is success
+        fail_msg: "Starting the VM failed after the rollback."
+        success_msg: "VM started successfully after the rollback."
