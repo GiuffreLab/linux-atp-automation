@@ -6,11 +6,6 @@
   tasks:
     - name: Stop the VM using shell command
       shell: "qm stop {{ vmid }}"
-      register: stop_result
-
-    - name: Print stop VM result
-      ansible.builtin.debug:
-        var: stop_result
 
     - name: Check if VM is stopped
       assert:
@@ -25,6 +20,7 @@
         api_user: "{{ api_user }}"
         api_password: "{{ api_password }}"
         vmid: "{{ vmid }}"
+        node: "{{ node }}"  
         snapname: "{{ snapshot_name }}"
         state: rollback
       register: rollback_result
@@ -36,12 +32,7 @@
 
     - name: Start the VM using shell command
       shell: "qm start {{ vmid }}"
-      register: start_result
       when: rollback_result is success  # Execute this task only if the rollback was successful
-
-    - name: Print start VM result
-      ansible.builtin.debug:
-        var: start_result
 
     - name: Confirm if VM is started
       assert:
@@ -49,4 +40,3 @@
           - start_result.rc == 0  # Checking the return code of the shell command
         fail_msg: "Starting the VM failed after the rollback."
         success_msg: "VM started successfully after the rollback."
-
