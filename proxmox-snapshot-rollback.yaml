@@ -13,7 +13,11 @@
         vmid: "{{ vmid }}"
         state: stopped  # This will stop the VM
         timeout: 90
-      register: start_result  # Register the output to a variable
+      register: stop_result  # Register the output to a variable
+
+    - name: Stop the VM results
+      ansible.builtin.debug:
+        var: stop_result  # Print the output of the stop VM task
     
     - name: Roll back to snapshot
       community.general.proxmox_snap:
