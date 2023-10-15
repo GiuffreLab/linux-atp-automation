@@ -20,7 +20,6 @@
         api_user: "{{ api_user }}"
         api_password: "{{ api_password }}"
         vmid: "{{ vmid }}"
-        node: "{{ node }}"  
         snapname: "{{ snapshot_name }}"
         state: rollback
       register: rollback_result
