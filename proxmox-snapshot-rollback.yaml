@@ -6,6 +6,7 @@
   tasks:
     - name: Stop the VM using shell command
       shell: "qm stop {{ vmid }}"
+      register: stop_result
 
     - name: Check if VM is stopped
       assert:
@@ -31,6 +32,7 @@
 
     - name: Start the VM using shell command
       shell: "qm start {{ vmid }}"
+      register: start_result
       when: rollback_result is success  # Execute this task only if the rollback was successful
 
     - name: Confirm if VM is started
