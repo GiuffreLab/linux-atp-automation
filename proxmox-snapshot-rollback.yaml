@@ -4,6 +4,17 @@
   gather_facts: no
 
   tasks:
+
+    - name: Stop the VM
+      community.general.proxmox:
+        api_host: "{{ api_host }}"
+        api_user: "{{ api_user }}"
+        api_password: "{{ api_password }}"
+        vmid: "{{ vmid }}"
+        state: stopped  # This will stop the VM
+        timeout: 90
+      register: start_result  # Register the output to a variable
+    
     - name: Roll back to snapshot
       community.general.proxmox_snap:
         api_host: "{{ api_host }}"
