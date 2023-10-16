@@ -1,7 +1,7 @@
 ---
 - name: Roll Back Proxmox VM to a Snapshot
   hosts: all
-  gather_facts: no
+  gather_facts: false
 
   tasks:
     - name: Stop the VM using shell command
