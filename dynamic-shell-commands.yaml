@@ -7,14 +7,14 @@
 
     - name: Execute Shell Commands Dynamically
       ansible.builtin.shell: "{{ item }}"
-      register: command_results
+#      register: command_results
       loop: "{{ shell_commands }}"
       ignore_errors: true
 
-    - name: Print Command Output
-      ansible.builtin.debug:
-        msg:
-          - "Command: {{ item.item }}"
-          - "Output: {{ item.stdout_lines }}"
-      loop: "{{ command_results.results }}"
-      when: item.stdout != ""
+ #   - name: Print Command Output
+ #     ansible.builtin.debug:
+ #       msg:
+ #         - "Command: {{ item.item }}"
+ #         - "Output: {{ item.stdout_lines }}"
+ #     loop: "{{ command_results.results }}"
+ #     when: item.stdout != ""
