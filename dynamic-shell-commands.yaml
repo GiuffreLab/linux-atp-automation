@@ -7,7 +7,7 @@
 
     - name: Execute Shell Commands Dynamically
       ansible.builtin.shell: "{{ item }}"
-#      register: command_results
+      register: command_results
       loop: "{{ shell_commands }}"
       ignore_errors: true
 
