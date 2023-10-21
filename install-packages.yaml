@@ -7,12 +7,14 @@
     - name: Update Apt Package Cache
       apt:
         update_cache: yes  # Run apt-get update to update the package cache
+      register: results
 
     - name: Install Apt packages chosen from the survey
       apt:
         name: "{{ item }}"
         state: present
       loop: "{{ apt_packages }}"
+      register: results
       when: item not in installed_packages
 
     - name: Gather installed Apt packages
