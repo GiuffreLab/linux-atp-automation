@@ -1,6 +1,6 @@
 ---
 - name: Roll Back Proxmox VM to a Snapshot
-  hosts: all
+  hosts: "{{ host_name }}"
   gather_facts: false
   tasks:
     - name: Install python3-venv package
