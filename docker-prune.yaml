@@ -11,3 +11,4 @@
       images: yes
       networks: yes
       volumes: yes
+    register: prune_result
