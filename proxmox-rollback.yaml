@@ -2,22 +2,35 @@
 - name: Roll Back Proxmox VM to a Snapshot
   hosts: all
   gather_facts: false
+
   tasks:
-    - name: Install python3-venv package
+    - name: Check if virtual environment exists
+      stat:
+        path: /proxmoxer
+      register: venv
+
+    - name: Install python3-venv package if venv does not exist
       apt:
         name: python3-venv
         state: present
       become: yes
+      when: not venv.stat.exists
 
-    - name: Create a virtual environment
+    - name: Create a virtual environment if it does not exist
       command: "python3 -m venv /proxmoxer"
       args:
         creates: "/proxmoxer"
+      when: not venv.stat.exists
 
     - name: Install required Python packages
       command: "/proxmoxer/bin/pip install proxmoxer requests"
       args:
         creates: "/proxmoxer/lib/python3.X/site-packages/proxmoxer"
+
+    - name: Set ansible_python_interpreter dynamically
+      set_fact:
+        ansible_python_interpreter: "/proxmoxer/bin/python"
+      when: venv.stat.exists
 
     - name: Stop the VM using shell command
       shell: "qm stop {{ vmid }}"
@@ -40,8 +53,6 @@
         state: rollback
       register: rollback_result
       when: stop_result.rc == 0
-      environment:
-        PATH: "/proxmoxer/bin:{{ ansible_env.PATH }}"  # Adding the virtual env to the PATH
 
     - name: Print rollback result
       ansible.builtin.debug:
