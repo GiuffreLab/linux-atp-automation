@@ -13,7 +13,7 @@
       apt:
         name: python3-venv
         state: present
-      become: yes
+      become: true
       when: not venv.stat.exists
 
     - name: Create a virtual environment if it does not exist
@@ -32,18 +32,18 @@
         ansible_python_interpreter: "/proxmoxer/bin/python"
       when: venv.stat.exists
 
-    - name: Stop the VM using shell command
+    - name: Stop VM ID{{ vmid }}
       shell: "qm stop {{ vmid }}"
       register: stop_result
 
-    - name: Check if VM is stopped
+    - name: Check if VM ID{{ vmid }} is stopped
       assert:
         that:
           - stop_result.rc == 0
-        fail_msg: "Stopping the VM failed. Cannot proceed with the rollback."
-        success_msg: "VM stopped successfully. Proceeding with the rollback."
+        fail_msg: "Stopping VM ID{{ vmid }} failed. Cannot proceed with the rollback."
+        success_msg: "VM ID{{ vmid }} stopped successfully. Proceeding with the rollback."
 
-    - name: Roll back to snapshot using virtual environment
+    - name: Roll back to snapshot named {{ snapshot_name }}
       community.general.proxmox_snap:
         api_host: "{{ api_host }}"
         api_user: "{{ api_user }}"
@@ -58,14 +58,14 @@
       ansible.builtin.debug:
         var: rollback_result
 
-    - name: Start the VM using shell command
+    - name: Start VM ID{{ vmid }}
       shell: "qm start {{ vmid }}"
       register: start_result
       when: rollback_result is success
 
-    - name: Confirm if VM is started
+    - name: Confirm if VM ID{{ vmid }} is started
       assert:
         that:
           - start_result.rc == 0
-        fail_msg: "Starting the VM failed after the rollback."
-        success_msg: "VM started successfully after the rollback."
+        fail_msg: "Starting VM ID{{ vmid }} failed after the rollback to {{ snapshot_name }}."
+        success_msg: "VM ID{{ vmid }} started successfully after the rollback to {{ snapshot_name }}."
