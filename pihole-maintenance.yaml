@@ -5,12 +5,18 @@
   become: true
 
   tasks:
+    - name: Get Current Status
+      ansible.builtin.command:
+        cmd: pihole status
+
     - name: Update PiHole
       ansible.builtin.command:
         cmd: pihole -up
-      register: results
 
     - name: Update Gravity
       ansible.builtin.command:
         cmd: pihole -g
-      register: results
+
+    - name: Get Final Status
+      ansible.builtin.command:
+        cmd: pihole status
