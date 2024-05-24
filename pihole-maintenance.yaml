@@ -7,16 +7,10 @@
   tasks:
     - name: Update PiHole
       ansible.builtin.command:
-        cmd:
-          - pihole
-        argv:
-          - -up
+        cmd: pihole -up
       register: results
 
     - name: Update Gravity
       ansible.builtin.command:
-        cmd:
-          - pihole
-        argv:
-          - -g
+        cmd: pihole -g
       register: results
