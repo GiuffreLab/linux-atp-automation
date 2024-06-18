@@ -15,6 +15,3 @@
         pihole version
       register: pihole_output
 
-    - name: Print PiHole output
-      ansible.builtin.debug:
-        msg: "{{ pihole_output.stdout_lines }}"
