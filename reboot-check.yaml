@@ -1,0 +1,34 @@
+---
+- name: Check if a reboot is required on a Linux server
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Check systemd reboot status
+      ansible.builtin.command:
+        cmd: systemctl status reboot.target
+      register: reboot_status
+      ignore_errors: true
+
+    - name: Determine if reboot is required
+      ansible.builtin.debug:
+        msg: "A reboot is required"
+      when: "'inactive' not in reboot_status.stdout"
+
+    - name: Determine if reboot is not required
+      ansible.builtin.debug:
+        msg: "A reboot is NOT required"
+      when: "'inactive' in reboot_status.stdout"
+
+    - name: Compile List of currently logged in users
+      ansible.builtin.command:
+        cmd: w
+      register: users_status
+
+    - name: Schedule reboot in 1 minutes for servers requiring reboot
+      ansible.builtin.reboot:
+        msg: "ATTENTION: this machine will reboot in 1 minutes to apply updates!"
+      pre_reboot_delay: 60
+      reboot_timeout: 600
+      become: true
+#      when: "'inactive' not in reboot_status.stdout"
