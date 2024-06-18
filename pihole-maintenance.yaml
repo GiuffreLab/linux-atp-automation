@@ -7,7 +7,9 @@
   tasks:
     - name: Get Current Status
       ansible.builtin.command:
-        cmd: pihole status && pihole version
+        cmd: 
+          - pihole status
+          - pihole version
 
     - name: Update PiHole
       ansible.builtin.command:
@@ -19,4 +21,6 @@
 
     - name: Get Final Status
       ansible.builtin.command:
-        cmd: pihole status && pihole version
+        cmd: 
+          - pihole status
+          - pihole version
