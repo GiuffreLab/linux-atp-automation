@@ -11,11 +11,11 @@
 
     - name: Update PiHole
       ansible.builtin.command:
-        cmd: pihole -up
+        cmd: pihole updatePihole
 
     - name: Update Gravity
       ansible.builtin.command:
-        cmd: pihole -g
+        cmd: pihole updateGravity
 
     - name: Get Final Status
       ansible.builtin.command:
