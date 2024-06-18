@@ -25,10 +25,10 @@
         cmd: w
       register: users_status
 
-    - name: Schedule reboot in 1 minutes for servers requiring reboot
+    - name: Schedule reboot in 5 minutes for servers requiring reboot
       ansible.builtin.reboot:
-        msg: "ATTENTION: this machine will reboot in 1 minutes to apply updates!"
-        pre_reboot_delay: 60
+        msg: "ATTENTION: this machine will reboot in 5 minutes to apply updates!"
+        pre_reboot_delay: 360
         reboot_timeout: 600
       become: true
-#      when: "'inactive' not in reboot_status.stdout"
+      when: "'inactive' not in reboot_status.stdout"
