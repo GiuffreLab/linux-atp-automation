@@ -5,26 +5,16 @@
   become: true
 
   tasks:
-    - name: Get Current Status
-      ansible.builtin.command:
-        cmd: pihole status
-          
-    - name: Get Current Version
-      ansible.builtin.command:
-        cmd: pihole version
+    - name: Run PiHole maintenance commands
+      ansible.builtin.shell: |
+        pihole status
+        pihole version
+        pihole updatePihole
+        pihole updateGravity
+        pihole status
+        pihole version
+      register: pihole_output
 
-    - name: Update PiHole
-      ansible.builtin.command:
-        cmd: pihole updatePihole
-
-    - name: Update Gravity
-      ansible.builtin.command:
-        cmd: pihole updateGravity
-
-    - name: Get Final Status
-      ansible.builtin.command:
-        cmd: pihole status
-
-    - name: Get Final Version
-      ansible.builtin.command:
-        cmd: pihole version
+    - name: Print PiHole output
+      ansible.builtin.debug:
+        msg: "{{ pihole_output.stdout_lines }}"
