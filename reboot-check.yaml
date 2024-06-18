@@ -28,7 +28,7 @@
     - name: Schedule reboot in 1 minutes for servers requiring reboot
       ansible.builtin.reboot:
         msg: "ATTENTION: this machine will reboot in 1 minutes to apply updates!"
-      pre_reboot_delay: 60
-      reboot_timeout: 600
+        pre_reboot_delay: 60
+        reboot_timeout: 600
       become: true
 #      when: "'inactive' not in reboot_status.stdout"
