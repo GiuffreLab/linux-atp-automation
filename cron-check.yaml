@@ -17,12 +17,24 @@
       register: user_crontab
       ignore_errors: true
       loop: "{{ home_users.stdout_lines }}"
+      changed_when: user_crontab.rc == 0
 
     - name: Get root user's cron jobs
       command: sudo crontab -u root -l
       register: root_crontab
       ignore_errors: true
+      changed_when: root_crontab.rc == 0
 
+    - name: Summarize cron jobs for users with a crontab
+      debug:
+        msg: "User {{ item.item }}'s crontab:\n{{ item.stdout }}"
+      when: item.rc == 0
+      loop: "{{ user_crontab.results }}"
+
+    - name: Summarize root user's cron jobs
+      debug:
+        msg: "Root user's crontab:\n{{ root_crontab.stdout }}"
+      when: root_crontab.rc == 0
     - name: Get system-wide crontab
       command: cat /etc/crontab
       register: system_crontab
