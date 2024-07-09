@@ -18,24 +18,22 @@
       register: user_crontab
       ignore_errors: true
       loop: "{{ home_users.stdout_lines }}"
-      changed_when: user_crontab.rc == 0
+      changed_when: false
       no_log: true
 
     - name: Mark users with crontabs
       set_fact:
         users_with_crontabs: "{{ users_with_crontabs + [item] }}"
-      when: user_crontab.rc == 0
+      when: user_crontab_results[item].rc == 0
       loop: "{{ home_users.stdout_lines }}"
-      loop_control:
-        index_var: idx
       vars:
-        user_crontab: "{{ user_crontab.results[idx] }}"
+        user_crontab_results: "{{ user_crontab.results | items2dict(key_name='item', value_name='result') }}"
 
     - name: Get root user's cron jobs
       command: sudo crontab -u root -l
       register: root_crontab
       ignore_errors: true
-      changed_when: root_crontab.rc == 0
+      changed_when: false
       no_log: true
 
     - name: Mark root user with crontab
