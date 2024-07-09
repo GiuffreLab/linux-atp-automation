@@ -42,7 +42,7 @@
     - name: Summarize cron jobs for each user who has a crontab
       debug:
         msg: "User {{ item.item }}'s crontab:\n{{ item.stdout }}"
-      when: '"no crontab" not in user_crontab.stderr'
+      when: '"no crontab" not in item.stderr'
       loop: "{{ user_crontab.results }}"
 
     - name: Summarize root user's cron jobs
