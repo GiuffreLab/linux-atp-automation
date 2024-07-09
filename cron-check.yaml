@@ -35,22 +35,11 @@
       register: root_crontab
       ignore_errors: true
       changed_when: false
-      no_log: true
-
-    - name: Mark root user with crontab
-      set_fact:
-        root_has_crontab: true
-      when: root_crontab.rc == 0
 
     - name: Summarize cron jobs for users with crontabs
       debug:
-        msg: "User {{ home_user }}'s crontab:\n{{ lookup('file', '/var/spool/cron/crontabs/' + home_user) }}"
+        msg: "User {{ home_users }}'s crontab:\n{{ lookup('file', '/var/spool/cron/crontabs/' + home_users) }}"
       loop: "{{ users_with_crontabs }}"
-
-    - name: Summarize root user's cron jobs
-      debug:
-        msg: "Root user's crontab:\n{{ root_crontab.stdout }}"
-      when: root_has_crontab
 
     - name: Summarize users without crontabs
       debug:
