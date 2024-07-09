@@ -23,13 +23,12 @@
 
     - name: Mark users with crontabs
       set_fact:
-        users_with_crontabs: "{{ users_with_crontabs + [item] }}"
+        users_with_crontabs: "{{ users_with_crontabs + [home_user] }}"
       when: user_crontab.results[idx].rc == 0
       loop: "{{ range(0, home_users.stdout_lines | length) | list }}"
       loop_control:
         index_var: idx
-      vars:
-        item: "{{ home_users.stdout_lines[idx] }}"
+        loop_var: home_user
 
     - name: Get root user's cron jobs
       command: sudo crontab -u root -l
@@ -45,7 +44,7 @@
 
     - name: Summarize cron jobs for users with crontabs
       debug:
-        msg: "User {{ item }}'s crontab:\n{{ lookup('file', '/var/spool/cron/crontabs/' + item) }}"
+        msg: "User {{ home_user }}'s crontab:\n{{ lookup('file', '/var/spool/cron/crontabs/' + home_user) }}"
       loop: "{{ users_with_crontabs }}"
 
     - name: Summarize root user's cron jobs
@@ -64,11 +63,6 @@
       register: system_crontab
       ignore_errors: true
 
-    - name: Summarize system-wide crontab
-      debug:
-        msg: "System-wide crontab:\n{{ system_crontab.stdout }}"
-      when: system_crontab.stdout is defined
-
     - name: List files in /etc/cron.d
       command: ls /etc/cron.d
       register: cron_d_files
@@ -79,9 +73,3 @@
       register: cron_d_contents
       ignore_errors: true
       loop: "{{ cron_d_files.stdout_lines }}"
-
-    - name: Summarize /etc/cron.d contents
-      debug:
-        msg: "/etc/cron.d/{{ item.item }}:\n{{ item.stdout }}"
-      when: item.stdout is defined
-      loop: "{{ cron_d_contents.results }}"
