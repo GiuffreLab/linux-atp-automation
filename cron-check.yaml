@@ -24,12 +24,12 @@
     - name: Mark users with crontabs
       set_fact:
         users_with_crontabs: "{{ users_with_crontabs + [item] }}"
-      when: user_crontab.rc == 0
-      loop: "{{ home_users.stdout_lines }}"
+      when: user_crontab.results[idx].rc == 0
+      loop: "{{ range(0, home_users.stdout_lines | length) | list }}"
       loop_control:
         index_var: idx
       vars:
-        user_crontab: "{{ user_crontab.results[idx] }}"
+        item: "{{ home_users.stdout_lines[idx] }}"
 
     - name: Get root user's cron jobs
       command: sudo crontab -u root -l
