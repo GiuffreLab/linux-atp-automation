@@ -15,28 +15,28 @@
     - name: Get cron jobs for each user
       command: crontab -u {{ item }} -l
       register: user_crontab
-      ignore_errors: yes
+      ignore_errors: true
       loop: "{{ home_users.stdout_lines }}"
 
     - name: Get root user's cron jobs
       command: sudo crontab -u root -l
       register: root_crontab
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Get system-wide crontab
       command: cat /etc/crontab
       register: system_crontab
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: List files in /etc/cron.d
       command: ls /etc/cron.d
       register: cron_d_files
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Get contents of each file in /etc/cron.d
       command: cat /etc/cron.d/{{ item }}
       register: cron_d_contents
-      ignore_errors: yes
+      ignore_errors: true
       loop: "{{ cron_d_files.stdout_lines }}"
 
     - name: Summarize cron jobs for each user who has a crontab
