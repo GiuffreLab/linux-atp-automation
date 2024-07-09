@@ -11,18 +11,32 @@
         upgrade: true
         autoclean: true
         autoremove: true
+        
+    - name: Check systemd reboot status
+      ansible.builtin.command:
+        cmd: systemctl status reboot.target
+      register: reboot_status
+      ignore_errors: true
 
-    - name: Checking if a reboot is needed
-      ansible.builtin.stat:
-        path: /var/run/reboot-required get_md5=no
-      register: reboot_required_file
+    - name: Determine if reboot is required
+      ansible.builtin.debug:
+        msg: "A reboot is required"
+      when: "'inactive' not in reboot_status.stdout"
 
-    - name: Executing reboot due to kernel update
+    - name: Determine if reboot is not required
+      ansible.builtin.debug:
+        msg: "A reboot is NOT required"
+      when: "'inactive' in reboot_status.stdout"
+
+    - name: Compile List of currently logged in users
+      ansible.builtin.command:
+        cmd: w
+      register: users_status
+
+    - name: Schedule reboot in 5 minutes for servers requiring reboot
       ansible.builtin.reboot:
-        msg: "Reboot initiated by Ansible for kernel updates"
-        connect_timeout: 5
-        reboot_timeout: 360
-        pre_reboot_delay: 0
-        post_reboot_delay: 360
-        test_command: uptime
-      when: reboot_required_file.stat.exists
+        msg: "ATTENTION: this machine will reboot in 5 minutes to apply updates!"
+        pre_reboot_delay: 360
+        reboot_timeout: 600
+      become: true
+      when: "'inactive' not in reboot_status.stdout"
