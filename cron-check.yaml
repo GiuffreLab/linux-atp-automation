@@ -18,12 +18,14 @@
       ignore_errors: true
       loop: "{{ home_users.stdout_lines }}"
       changed_when: user_crontab.rc == 0
+      no_log: true
 
     - name: Get root user's cron jobs
       command: sudo crontab -u root -l
       register: root_crontab
       ignore_errors: true
       changed_when: root_crontab.rc == 0
+      no_log: true
 
     - name: Summarize cron jobs for users with a crontab
       debug:
