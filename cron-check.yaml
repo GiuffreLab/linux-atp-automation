@@ -38,7 +38,7 @@
 
     - name: Summarize cron jobs for users with crontabs
       debug:
-        msg: "User {{ home_users }}'s crontab:\n{{ lookup('file', '/var/spool/cron/crontabs/' + home_users) }}"
+        msg: "User {{ item }}'s crontab:\n{{ lookup('file', '/var/spool/cron/crontabs/' + item) }}"
       loop: "{{ users_with_crontabs }}"
 
     - name: Summarize users without crontabs
