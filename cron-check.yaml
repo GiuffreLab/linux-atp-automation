@@ -1,7 +1,7 @@
 ---
 - name: Gather and summarize cron jobs across all users with a /home directory
   hosts: all
-  become: yes
+  become: true
   gather_facts: false
 
   vars:
