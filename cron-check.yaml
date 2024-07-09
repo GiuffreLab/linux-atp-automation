@@ -22,12 +22,21 @@
       changed_when: false
       no_log: true
 
+    - name: Debug user crontab results
+      debug:
+        var: user_crontab
+
     - name: Store user crontab results
       set_fact:
-        user_crontab_results: "{{ user_crontab_results | combine({item: user_crontab}) }}"
-      loop: "{{ home_users.stdout_lines }}"
+        user_crontab_results: "{{ user_crontab_results | combine({item: user_crontab.results[idx]}) }}"
+      loop: "{{ range(0, home_users.stdout_lines | length) | list }}"
       loop_control:
+        index_var: idx
         loop_var: item
+
+    - name: Debug combined crontab results
+      debug:
+        var: user_crontab_results
 
     - name: Mark users with crontabs
       set_fact:
