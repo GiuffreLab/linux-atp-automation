@@ -6,59 +6,40 @@
 
   vars:
     users_with_crontabs: []
-    root_has_crontab: false
-    user_crontab_results: {}
 
   tasks:
     - name: Get list of users with a /home directory
       command: ls /home
       register: home_users
 
-    - name: Get cron jobs for each user
-      command: crontab -u {{ item }} -l
-      register: user_crontab
-      ignore_errors: true
+    - name: Check if crontab exists for each user
+      stat:
+        path: /var/spool/cron/crontabs/{{ item }}
+      register: user_crontab_stat
       loop: "{{ home_users.stdout_lines }}"
       changed_when: false
       no_log: true
 
-    - name: Store user crontab results
-      set_fact:
-        user_crontab_results: "{{ user_crontab_results | combine({item: user_crontab}) }}"
-      loop: "{{ home_users.stdout_lines }}"
-      loop_control:
-        loop_var: item
-
-    - name: Debug user crontab results
-      debug:
-        var: user_crontab_results
-
     - name: Mark users with crontabs
       set_fact:
         users_with_crontabs: "{{ users_with_crontabs + [item] }}"
-      when: user_crontab_results[item].rc == 0
+      when: user_crontab_stat.stat.exists
       loop: "{{ home_users.stdout_lines }}"
       loop_control:
         loop_var: item
 
     - name: Summarize cron jobs for users with crontabs
-      debug:
-        msg: "User {{ item }}'s crontab:\n{{ user_crontab_results[item].stdout }}"
+      command: crontab -u {{ item }} -l
+      register: user_crontab_summary
+      ignore_errors: true
       loop: "{{ users_with_crontabs }}"
-      loop_control:
-        loop_var: item
+      changed_when: false
 
     - name: Get root user's cron jobs
       command: sudo crontab -u root -l
       register: root_crontab
       ignore_errors: true
       changed_when: false
-
-    - name: Summarize users without crontabs
-      debug:
-        msg: "User {{ item }} has no crontab."
-      when: item not in users_with_crontabs
-      loop: "{{ home_users.stdout_lines }}"
 
     - name: Get system-wide crontab
       command: cat /etc/crontab
@@ -75,3 +56,4 @@
       register: cron_d_contents
       ignore_errors: true
       loop: "{{ cron_d_files.stdout_lines }}"
+      changed_when: false
