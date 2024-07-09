@@ -54,16 +54,6 @@
       ignore_errors: true
       changed_when: false
 
-    - name: Mark root user with crontab
-      set_fact:
-        root_has_crontab: true
-      when: root_crontab.rc == 0
-
-    - name: Summarize root user's cron jobs
-      debug:
-        msg: "Root user's crontab:\n{{ root_crontab.stdout }}"
-      when: root_has_crontab
-
     - name: Summarize users without crontabs
       debug:
         msg: "User {{ item }} has no crontab."
@@ -75,11 +65,6 @@
       register: system_crontab
       ignore_errors: true
 
-    - name: Summarize system-wide crontab
-      debug:
-        msg: "System-wide crontab:\n{{ system_crontab.stdout }}"
-      when: system_crontab.stdout is defined
-
     - name: List files in /etc/cron.d
       command: ls /etc/cron.d
       register: cron_d_files
@@ -90,9 +75,3 @@
       register: cron_d_contents
       ignore_errors: true
       loop: "{{ cron_d_files.stdout_lines }}"
-
-    - name: Summarize /etc/cron.d contents
-      debug:
-        msg: "/etc/cron.d/{{ item.item }}:\n{{ item.stdout }}"
-      when: item.stdout is defined
-      loop: "{{ cron_d_contents.results }}"
