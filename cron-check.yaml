@@ -24,21 +24,26 @@
     - name: Mark users with crontabs
       set_fact:
         users_with_crontabs: "{{ users_with_crontabs + [item] }}"
-      when: user_crontab_results[item].rc == 0
-      loop: "{{ home_users.stdout_lines }}"
+      when: user_crontab.results[idx].rc == 0
+      loop: "{{ range(0, home_users.stdout_lines | length) | list }}"
+      loop_control:
+        index_var: idx
+        loop_var: item
+
+    - name: Summarize cron jobs for users with crontabs
+      debug:
+        msg: "User {{ item }}'s crontab:\n{{ user_crontab_results[item].stdout }}"
+      loop: "{{ users_with_crontabs }}"
       vars:
         user_crontab_results: "{{ dict(user_crontab.results | map(attribute='item') | zip(user_crontab.results)) }}"
+      loop_control:
+        loop_var: item
 
     - name: Get root user's cron jobs
       command: sudo crontab -u root -l
       register: root_crontab
       ignore_errors: true
       changed_when: false
-
-    - name: Summarize cron jobs for users with crontabs
-      debug:
-        msg: "User {{ item }}'s crontab:\n{{ lookup('file', '/var/spool/cron/crontabs/' + item) }}"
-      loop: "{{ users_with_crontabs }}"
 
     - name: Summarize users without crontabs
       debug:
