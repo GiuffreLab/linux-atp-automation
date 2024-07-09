@@ -38,25 +38,3 @@
       register: cron_d_contents
       ignore_errors: true
       loop: "{{ cron_d_files.stdout_lines }}"
-
-    - name: Summarize cron jobs for each user who has a crontab
-      debug:
-        msg: "User {{ item.item }}'s crontab:\n{{ item.stdout }}"
-      when: '"no crontab" not in item.stderr'
-      loop: "{{ user_crontab.results }}"
-
-    - name: Summarize root user's cron jobs
-      debug:
-        msg: "Root user's crontab:\n{{ root_crontab.stdout }}"
-      when: root_crontab.stdout is defined
-
-    - name: Summarize system-wide crontab
-      debug:
-        msg: "System-wide crontab:\n{{ system_crontab.stdout }}"
-      when: system_crontab.stdout is defined
-
-    - name: Summarize /etc/cron.d contents
-      debug:
-        msg: "/etc/cron.d/{{ item.item }}:\n{{ item.stdout }}"
-      when: item.stdout is defined
-      loop: "{{ cron_d_contents.results }}"
