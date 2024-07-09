@@ -1,0 +1,62 @@
+---
+- name: Gather and summarize cron jobs across all users with a /home directory
+  hosts: all
+  become: yes
+  gather_facts: false
+
+  vars:
+    cron_summary: []
+
+  tasks:
+    - name: Get list of users with a /home directory
+      command: ls /home
+      register: home_users
+
+    - name: Get cron jobs for each user
+      command: crontab -u {{ item }} -l
+      register: user_crontab
+      ignore_errors: yes
+      loop: "{{ home_users.stdout_lines }}"
+
+    - name: Get root user's cron jobs
+      command: sudo crontab -u root -l
+      register: root_crontab
+      ignore_errors: yes
+
+    - name: Get system-wide crontab
+      command: cat /etc/crontab
+      register: system_crontab
+      ignore_errors: yes
+
+    - name: List files in /etc/cron.d
+      command: ls /etc/cron.d
+      register: cron_d_files
+      ignore_errors: yes
+
+    - name: Get contents of each file in /etc/cron.d
+      command: cat /etc/cron.d/{{ item }}
+      register: cron_d_contents
+      ignore_errors: yes
+      loop: "{{ cron_d_files.stdout_lines }}"
+
+    - name: Summarize cron jobs for each user who has a crontab
+      debug:
+        msg: "User {{ item.item }}'s crontab:\n{{ item.stdout }}"
+      when: '"no crontab" not in user_crontab.stderr'
+      loop: "{{ user_crontab.results }}"
+
+    - name: Summarize root user's cron jobs
+      debug:
+        msg: "Root user's crontab:\n{{ root_crontab.stdout }}"
+      when: root_crontab.stdout is defined
+
+    - name: Summarize system-wide crontab
+      debug:
+        msg: "System-wide crontab:\n{{ system_crontab.stdout }}"
+      when: system_crontab.stdout is defined
+
+    - name: Summarize /etc/cron.d contents
+      debug:
+        msg: "/etc/cron.d/{{ item.item }}:\n{{ item.stdout }}"
+      when: item.stdout is defined
+      loop: "{{ cron_d_contents.results }}"
