@@ -24,7 +24,6 @@
       register: user_crontab_stat
       loop: "{{ home_users.stdout_lines }}"
       changed_when: false
-      no_log: true
       loop_control:
         loop_var: item
 
