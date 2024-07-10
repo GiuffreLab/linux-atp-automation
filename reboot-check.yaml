@@ -13,12 +13,12 @@
       set_fact:
         current_kernel_version: "{{ current_kernel.stdout.split()[4] }}"
 
-    - name: Get installed kernel packages (Debian/Ubuntu)
+    - name: Get latest installed kernel version (Debian/Ubuntu)
       ansible.builtin.shell: "dpkg -l | grep '^ii' | grep 'linux-image-' | awk '{print $3}' | sort -V | tail -n 1"
       register: latest_installed_kernel
       when: ansible_facts['os_family'] == 'Debian'
 
-    - name: Get installed kernel packages (RHEL)
+    - name: Get latest installed kernel version (RHEL)
       ansible.builtin.shell: "rpm -q --last kernel | head -n 1 | awk '{print $1}'"
       register: latest_installed_kernel
       when: ansible_facts['os_family'] == 'RedHat'
@@ -48,7 +48,7 @@
     - name: Set fact if reboot is required due to kernel version mismatch
       set_fact:
         reboot_required: true
-      when: current_kernel_version != latest_installed_kernel.stdout.strip()
+      when: latest_installed_kernel.stdout is defined and current_kernel_version != latest_installed_kernel.stdout.strip()
 
     - name: Set fact if reboot is required due to reboot-required file
       set_fact:
