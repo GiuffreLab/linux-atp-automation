@@ -6,7 +6,7 @@
   tasks:
     - name: Get current running kernel version
       ansible.builtin.command:
-        cmd: uname -a
+        cmd: uname -v
       register: current_kernel
 
     - name: Get installed kernel packages (Debian/Ubuntu)
@@ -22,16 +22,16 @@
     - name: Debug current kernel and latest installed kernel (Debian/Ubuntu)
       ansible.builtin.debug:
         msg: "Current kernel: {{ current_kernel.stdout.strip() }}, Latest installed kernel: {{ latest_installed_kernel.stdout.strip() }}"
-      when: ansible_facts['os_family'] == 'Debian'
+      when: ansible_facts['os_family'] == 'Debian' and latest_installed_kernel.stdout is defined
 
     - name: Debug current kernel and latest installed kernel (RHEL)
       ansible.builtin.debug:
         msg: "Current kernel: {{ current_kernel.stdout.strip() }}, Latest installed kernel: {{ latest_installed_kernel.stdout.strip() }}"
-      when: ansible_facts['os_family'] == 'RedHat'
+      when: ansible_facts['os_family'] == 'RedHat' and latest_installed_kernel.stdout is defined
 
     - name: Extract current kernel version
       set_fact:
-        current_kernel_version: "{{ current_kernel.stdout.split()[2] }}"
+        current_kernel_version: "{{ current_kernel.stdout.split()[4] }}"
 
     - name: Check for reboot-required file (Debian/Ubuntu)
       ansible.builtin.stat:
