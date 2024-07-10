@@ -9,6 +9,10 @@
         cmd: uname -v
       register: current_kernel
 
+    - name: Extract current kernel version
+      set_fact:
+        current_kernel_version: "{{ current_kernel.stdout.split()[4] }}"
+
     - name: Get installed kernel packages (Debian/Ubuntu)
       ansible.builtin.shell: "dpkg -l | grep '^ii' | grep 'linux-image-' | awk '{print $3}' | sort -V | tail -n 1"
       register: latest_installed_kernel
@@ -21,17 +25,13 @@
 
     - name: Debug current kernel and latest installed kernel (Debian/Ubuntu)
       ansible.builtin.debug:
-        msg: "Current kernel: {{ current_kernel.stdout.strip() }}, Latest installed kernel: {{ latest_installed_kernel.stdout.strip() }}"
+        msg: "Current kernel: {{ current_kernel_version }}, Latest installed kernel: {{ latest_installed_kernel.stdout.strip() }}"
       when: ansible_facts['os_family'] == 'Debian' and latest_installed_kernel.stdout is defined
 
     - name: Debug current kernel and latest installed kernel (RHEL)
       ansible.builtin.debug:
-        msg: "Current kernel: {{ current_kernel.stdout.strip() }}, Latest installed kernel: {{ latest_installed_kernel.stdout.strip() }}"
+        msg: "Current kernel: {{ current_kernel_version }}, Latest installed kernel: {{ latest_installed_kernel.stdout.strip() }}"
       when: ansible_facts['os_family'] == 'RedHat' and latest_installed_kernel.stdout is defined
-
-    - name: Extract current kernel version
-      set_fact:
-        current_kernel_version: "{{ current_kernel.stdout.split()[4] }}"
 
     - name: Check for reboot-required file (Debian/Ubuntu)
       ansible.builtin.stat:
@@ -73,7 +73,7 @@
     - name: Schedule reboot in 5 minutes for servers requiring reboot
       ansible.builtin.reboot:
         msg: "ATTENTION: this machine will reboot in 5 minutes to apply updates!"
-        pre_reboot_delay: 300
+        pre_reboot_delay: 30
         reboot_timeout: 600
       become: true
       when: reboot_required | default(false)
