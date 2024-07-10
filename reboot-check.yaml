@@ -10,12 +10,23 @@
       register: reboot_required_file
       when: ansible_facts['os_family'] == 'Debian'
 
+    - name: Set default value for reboot_required_file (Debian/Ubuntu)
+      ansible.builtin.set_fact:
+        reboot_required_file: { "stat": { "exists": false } }
+      when: ansible_facts['os_family'] != 'Debian'
+
     - name: Check if a reboot is required (RHEL/CentOS)
-      ansible.builtin.command: needs-restarting -r
+      ansible.builtin.command:
+        cmd: needs-restarting -r
       register: needs_reboot
       ignore_errors: true
       changed_when: false
       when: ansible_facts['os_family'] == 'RedHat'
+
+    - name: Set default value for needs_reboot (RHEL/CentOS)
+      ansible.builtin.set_fact:
+        needs_reboot: { "rc": 0 }
+      when: ansible_facts['os_family'] != 'RedHat'
 
     - name: Determine if a reboot is required (Debian/Ubuntu)
       ansible.builtin.set_fact:
@@ -38,7 +49,8 @@
       when: not reboot_required | default(false)
 
     - name: Compile list of currently logged in users
-      ansible.builtin.command: w
+      ansible.builtin.command:
+        cmd: w
       register: users_status
 
     - name: Schedule reboot in 5 minutes for servers requiring reboot
