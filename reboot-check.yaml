@@ -4,42 +4,30 @@
   gather_facts: true
 
   tasks:
-    - name: Get current running kernel version (Debian/Ubuntu)
+    - name: Get current running kernel version
       ansible.builtin.command:
-        cmd: uname -v
-      register: current_kernel_version
-      when: ansible_facts['os_family'] == 'Debian'
-
-    - name: Extract current kernel version (Debian/Ubuntu)
-      set_fact:
-        current_kernel_version: "{{ current_kernel_version.stdout.split()[4] }}"
-      when: ansible_facts['os_family'] == 'Debian'
+        cmd: uname -a
+      register: current_kernel
 
     - name: Get latest installed kernel version (Debian/Ubuntu)
       ansible.builtin.shell: "dpkg -l | grep '^ii' | grep 'linux-image-' | awk '{print $3}' | sort -V | tail -n 1"
       register: latest_installed_kernel_version
       when: ansible_facts['os_family'] == 'Debian'
 
+    - name: Get latest installed kernel version (RHEL)
+      ansible.builtin.shell: "rpm -q --last kernel | head -n 1 | awk '{print $1}'"
+      register: latest_installed_kernel_version
+      when: ansible_facts['os_family'] == 'RedHat'
+
     - name: Check for kernel version mismatch and set reboot flag (Debian/Ubuntu)
       set_fact:
         reboot_required: true
-      when: ansible_facts['os_family'] == 'Debian' and current_kernel_version != latest_installed_kernel_version.stdout.strip() and latest_installed_kernel_version.stdout is defined
-
-    - name: Get current running kernel version (RHEL)
-      ansible.builtin.command:
-        cmd: uname -r
-      register: current_kernel_version_rhel
-      when: ansible_facts['os_family'] == 'RedHat'
-
-    - name: Get latest installed kernel version (RHEL)
-      ansible.builtin.shell: "rpm -q --last kernel | head -n 1 | awk '{print $1}'"
-      register: latest_installed_kernel_version_rhel
-      when: ansible_facts['os_family'] == 'RedHat'
+      when: ansible_facts['os_family'] == 'Debian' and latest_installed_kernel_version.stdout.strip() not in current_kernel.stdout
 
     - name: Check for kernel version mismatch and set reboot flag (RHEL)
       set_fact:
         reboot_required: true
-      when: ansible_facts['os_family'] == 'RedHat' and current_kernel_version_rhel.stdout.strip() not in latest_installed_kernel_version_rhel.stdout and latest_installed_kernel_version_rhel.stdout is defined
+      when: ansible_facts['os_family'] == 'RedHat' and latest_installed_kernel_version.stdout.strip() not in current_kernel.stdout
 
     - name: Determine if reboot is required
       ansible.builtin.debug:
