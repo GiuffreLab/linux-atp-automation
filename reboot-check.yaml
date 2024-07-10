@@ -5,66 +5,45 @@
 
   tasks:
     - name: Check for the presence of /var/run/reboot-required (Debian/Ubuntu)
-      stat:
+      ansible.buitlin.stat:
         path: /var/run/reboot-required
       register: reboot_required_file
       when: ansible_facts['os_family'] == 'Debian'
 
-    - name: Check for the presence of /run/reboot-required (RHEL/CentOS)
-      stat:
-        path: /run/reboot-required
-      register: reboot_required_file
-      when: ansible_facts['os_family'] == 'RedHat'
-
-    - name: Get current running kernel version
-      command: uname -r
-      register: current_kernel
-
-    - name: Get latest installed kernel version (Debian/Ubuntu)
-      shell: "dpkg -l | grep '^ii' | grep 'linux-image-' | awk '{print $3}' | sort -V | tail -n 1"
-      register: latest_installed_kernel
-      when: ansible_facts['os_family'] == 'Debian'
-
-    - name: Get latest installed kernel version (RHEL/CentOS)
-      shell: "rpm -q --last kernel | head -n 1 | awk '{print $1}'"
-      register: latest_installed_kernel
-      when: ansible_facts['os_family'] == 'RedHat'
-
-    - name: Check if the current kernel matches the latest installed kernel (Debian/Ubuntu)
-      set_fact:
-        kernel_reboot_required: "{{ current_kernel.stdout.strip() != latest_installed_kernel.stdout.strip() }}"
-      when: ansible_facts['os_family'] == 'Debian'
-
-    - name: Check if the current kernel matches the latest installed kernel (RHEL/CentOS)
-      set_fact:
-        kernel_reboot_required: "{{ current_kernel.stdout.strip() != latest_installed_kernel.stdout.strip().split('-')[1] }}"
+    - name: Check if a reboot is required (RHEL/CentOS)
+      ansible.builtin.command: needs-restarting -r
+      register: needs_reboot
+      ignore_errors: true
+      changed_when: false
       when: ansible_facts['os_family'] == 'RedHat'
 
     - name: Determine if a reboot is required (Debian/Ubuntu)
-      set_fact:
+      ansible.builtin.set_fact:
         reboot_required: true
-      when: reboot_required_file.stat.exists or kernel_reboot_required | default(false)
-      ignore_errors: true
+      when: reboot_required_file.stat.exists
 
     - name: Determine if a reboot is required (RHEL/CentOS)
-      set_fact:
+      ansible.builtin.set_fact:
         reboot_required: true
-      when: reboot_required_file.stat.exists or kernel_reboot_required | default(false)
-      ignore_errors: true
+      when: needs_reboot.rc == 1
 
     - name: Debug if a reboot is required
-      debug:
+      ansible.builtin.debug:
         msg: "A reboot is required"
       when: reboot_required | default(false)
 
     - name: Debug if a reboot is not required
-      debug:
+      ansible.builtin.debug:
         msg: "A reboot is NOT required"
       when: not reboot_required | default(false)
 
+    - name: Compile list of currently logged in users
+      ansible.builtin.command: w
+      register: users_status
+
     - name: Schedule reboot in 5 minutes for servers requiring reboot
       become: true
-      reboot:
+      ansible.builtin.reboot:
         msg: "ATTENTION: this machine will reboot in 5 minutes to apply updates!"
         pre_reboot_delay: 30
         reboot_timeout: 600
