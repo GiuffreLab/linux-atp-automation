@@ -1,7 +1,7 @@
 ---
 - name: Check if a reboot is required on a Linux server
   hosts: all
-  gather_facts: false
+  gather_facts: true
 
   tasks:
     - name: Get current kernel version
