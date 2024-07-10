@@ -11,23 +11,33 @@
 
     - name: Get latest installed kernel version (Debian/Ubuntu)
       ansible.builtin.shell: "dpkg -l | grep '^ii' | grep 'linux-image-' | awk '{print $3}' | sort -V | tail -n 1"
-      register: latest_installed_kernel_version
+      register: latest_installed_kernel_version_debian
       when: ansible_facts['os_family'] == 'Debian'
+
+    - name: Set latest installed kernel version fact (Debian/Ubuntu)
+      set_fact:
+        latest_installed_kernel_version: "{{ latest_installed_kernel_version_debian.stdout.strip() }}"
+      when: ansible_facts['os_family'] == 'Debian' and latest_installed_kernel_version_debian.stdout is defined
 
     - name: Get latest installed kernel version (RHEL)
       ansible.builtin.shell: "rpm -q --last kernel | head -n 1 | awk '{print $1}'"
-      register: latest_installed_kernel_version
+      register: latest_installed_kernel_version_rhel
       when: ansible_facts['os_family'] == 'RedHat'
+
+    - name: Set latest installed kernel version fact (RHEL)
+      set_fact:
+        latest_installed_kernel_version: "{{ latest_installed_kernel_version_rhel.stdout.strip() }}"
+      when: ansible_facts['os_family'] == 'RedHat' and latest_installed_kernel_version_rhel.stdout is defined
 
     - name: Check for kernel version mismatch and set reboot flag (Debian/Ubuntu)
       set_fact:
         reboot_required: true
-      when: ansible_facts['os_family'] == 'Debian' and latest_installed_kernel_version.stdout.strip() not in current_kernel.stdout
+      when: ansible_facts['os_family'] == 'Debian' and latest_installed_kernel_version not in current_kernel.stdout
 
     - name: Check for kernel version mismatch and set reboot flag (RHEL)
       set_fact:
         reboot_required: true
-      when: ansible_facts['os_family'] == 'RedHat' and latest_installed_kernel_version.stdout.strip() not in current_kernel.stdout
+      when: ansible_facts['os_family'] == 'RedHat' and latest_installed_kernel_version not in current_kernel.stdout
 
     - name: Determine if reboot is required
       ansible.builtin.debug:
