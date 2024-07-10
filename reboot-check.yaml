@@ -1,44 +1,28 @@
 ---
 - name: Check if a reboot is required on a Linux server
   hosts: all
-  gather_facts: true
+  gather_facts: false
 
   tasks:
-    - name: Set reboot_required_file_path based on OS
-      set_fact:
-        reboot_required_file_path: "{{ '/var/run/reboot-required' if ansible_facts['os_family'] == 'Debian' else '/run/reboot-required' }}"
-      when: ansible_facts['os_family'] in ['RedHat', 'Debian']
-
-    - name: Check for reboot-required file
-      ansible.builtin.stat:
-        path: "{{ reboot_required_file_path }}"
-      register: reboot_required_file
-
-    - name: Check current kernel version
+    - name: Get current kernel version
       ansible.builtin.command:
         cmd: uname -r
       register: current_kernel
 
-    - name: Check latest installed kernel version (RHEL)
+    - name: Get latest installed kernel version (RHEL)
       ansible.builtin.command:
         cmd: rpm -q --last kernel | head -n 1 | awk '{print $1}'
       register: latest_kernel
       when: ansible_facts['os_family'] == 'RedHat'
 
-    - name: Check latest installed kernel version (Debian/Ubuntu)
+    - name: Get latest installed kernel version (Debian/Ubuntu)
       ansible.builtin.shell: "dpkg -l 'linux-image-*' | grep '^ii' | awk '{print $3}' | sort -V | tail -n 1"
       register: latest_kernel
       when: ansible_facts['os_family'] == 'Debian'
 
-    - name: Normalize kernel versions for comparison (Debian/Ubuntu)
-      set_fact:
-        current_kernel_normalized: "{{ current_kernel.stdout.split('-')[0] }}"
-        latest_kernel_normalized: "{{ latest_kernel.stdout.split('-')[0] }}"
-      when: ansible_facts['os_family'] == 'Debian'
-
     - name: Debug current kernel and latest installed kernel (Debian/Ubuntu)
       ansible.builtin.debug:
-        msg: "Current kernel: {{ current_kernel_normalized }}, Latest installed kernel: {{ latest_kernel_normalized }}"
+        msg: "Current kernel: {{ current_kernel.stdout.strip() }}, Latest installed kernel: {{ latest_kernel.stdout.strip() }}"
       when: ansible_facts['os_family'] == 'Debian'
 
     - name: Debug current kernel and latest installed kernel (RHEL)
@@ -49,22 +33,17 @@
     - name: Set fact if reboot is required
       set_fact:
         reboot_required: true
-      when: reboot_required_file.stat.exists or (ansible_facts['os_family'] == 'Debian' and current_kernel_normalized != latest_kernel_normalized) or (ansible_facts['os_family'] == 'RedHat' and current_kernel.stdout.strip() != latest_kernel.stdout.strip())
-
-    - name: Determine if reboot is required due to reboot-required file
-      ansible.builtin.debug:
-        msg: "A reboot is required due to the presence of {{ reboot_required_file_path }} file"
-      when: reboot_required_file.stat.exists
+      when: (ansible_facts['os_family'] == 'Debian' and current_kernel.stdout.strip() != latest_kernel.stdout.strip()) or (ansible_facts['os_family'] == 'RedHat' and current_kernel.stdout.strip() != latest_kernel.stdout.strip())
 
     - name: Determine if reboot is required due to kernel version mismatch
       ansible.builtin.debug:
         msg: "A reboot is required due to kernel version mismatch"
-      when: (ansible_facts['os_family'] == 'Debian' and current_kernel_normalized != latest_kernel_normalized) or (ansible_facts['os_family'] == 'RedHat' and current_kernel.stdout.strip() != latest_kernel.stdout.strip())
+      when: (ansible_facts['os_family'] == 'Debian' and current_kernel.stdout.strip() != latest_kernel.stdout.strip()) or (ansible_facts['os_family'] == 'RedHat' and current_kernel.stdout.strip() != latest_kernel.stdout.strip())
 
     - name: Determine if reboot is not required
       ansible.builtin.debug:
         msg: "A reboot is NOT required"
-      when: not reboot_required_file.stat.exists and ((ansible_facts['os_family'] == 'Debian' and current_kernel_normalized == latest_kernel_normalized) or (ansible_facts['os_family'] == 'RedHat' and current_kernel.stdout.strip() == latest_kernel.stdout.strip()))
+      when: (ansible_facts['os_family'] == 'Debian' and current_kernel.stdout.strip() == latest_kernel.stdout.strip()) or (ansible_facts['os_family'] == 'RedHat' and current_kernel.stdout.strip() == latest_kernel.stdout.strip())
 
     - name: Compile List of currently logged in users
       ansible.builtin.command:
