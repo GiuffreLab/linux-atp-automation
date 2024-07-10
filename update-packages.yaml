@@ -1,7 +1,7 @@
 ---
 - name: Perform updates to all lab nodes
   hosts: all
-  gather_facts: false
+  gather_facts: true
 
   tasks:
     - name: Upgrade distribution and clean / remove unused packages / dependencies
