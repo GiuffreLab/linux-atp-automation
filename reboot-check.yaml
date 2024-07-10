@@ -14,6 +14,11 @@
         path: "{{ reboot_required_file_path }}"
       register: reboot_required_file
 
+    - name: Check current kernel version
+      ansible.builtin.command:
+        cmd: uname -r
+      register: current_kernel
+
     - name: Check latest installed kernel version (RHEL)
       ansible.builtin.command:
         cmd: rpm -q --last kernel | head -n 1 | awk '{print $1}'
@@ -25,10 +30,16 @@
       register: latest_kernel
       when: ansible_facts['os_family'] == 'Debian'
 
+    - name: Normalize kernel versions for comparison (Debian/Ubuntu)
+      set_fact:
+        current_kernel_normalized: "{{ current_kernel.stdout.split('-')[0] }}"
+        latest_kernel_normalized: "{{ latest_kernel.stdout.split('-')[0] }}"
+      when: ansible_facts['os_family'] == 'Debian'
+
     - name: Set fact if reboot is required
       set_fact:
         reboot_required: true
-      when: reboot_required_file.stat.exists or (ansible_facts['os_family'] == 'Debian' and ansible_kernel.split('-')[0] != latest_kernel.stdout.split('-')[0]) or (ansible_facts['os_family'] == 'RedHat' and ansible_kernel != latest_kernel.stdout.strip())
+      when: reboot_required_file.stat.exists or (ansible_facts['os_family'] == 'Debian' and current_kernel_normalized != latest_kernel_normalized) or (ansible_facts['os_family'] == 'RedHat' and current_kernel.stdout.strip() != latest_kernel.stdout.strip())
 
     - name: Determine if reboot is required due to reboot-required file
       ansible.builtin.debug:
@@ -38,12 +49,12 @@
     - name: Determine if reboot is required due to kernel version mismatch
       ansible.builtin.debug:
         msg: "A reboot is required due to kernel version mismatch"
-      when: (ansible_facts['os_family'] == 'Debian' and ansible_kernel.split('-')[0] != latest_kernel.stdout.split('-')[0]) or (ansible_facts['os_family'] == 'RedHat' and ansible_kernel != latest_kernel.stdout.strip())
+      when: (ansible_facts['os_family'] == 'Debian' and current_kernel_normalized != latest_kernel_normalized) or (ansible_facts['os_family'] == 'RedHat' and current_kernel.stdout.strip() != latest_kernel.stdout.strip())
 
     - name: Determine if reboot is not required
       ansible.builtin.debug:
         msg: "A reboot is NOT required"
-      when: not reboot_required_file.stat.exists and ((ansible_facts['os_family'] == 'Debian' and ansible_kernel.split('-')[0] == latest_kernel.stdout.split('-')[0]) or (ansible_facts['os_family'] == 'RedHat' and ansible_kernel == latest_kernel.stdout.strip()))
+      when: not reboot_required_file.stat.exists and ((ansible_facts['os_family'] == 'Debian' and current_kernel_normalized == latest_kernel_normalized) or (ansible_facts['os_family'] == 'RedHat' and current_kernel.stdout.strip() == latest_kernel.stdout.strip()))
 
     - name: Compile List of currently logged in users
       ansible.builtin.command:
@@ -53,7 +64,7 @@
     - name: Schedule reboot in 5 minutes for servers requiring reboot
       ansible.builtin.reboot:
         msg: "ATTENTION: this machine will reboot in 5 minutes to apply updates!"
-        pre_reboot_delay: 30
+        pre_reboot_delay: 360
         reboot_timeout: 600
       become: true
       when: reboot_required | default(false)
