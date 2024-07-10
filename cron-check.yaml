@@ -2,31 +2,48 @@
 - name: Gather and summarize cron jobs across all users with a /home directory
   hosts: all
   become: true
-  gather_facts: false
+  gather_facts: true
 
   vars:
     users_with_crontabs: []
+    root_user: "root"
+    crontab_dir: ""
 
   tasks:
+    - name: Determine crontab directory based on OS family
+      set_fact:
+        crontab_dir: "{{ '/var/spool/cron' if ansible_os_family == 'RedHat' else '/var/spool/cron/crontabs' }}"
+
     - name: Get list of users with a /home directory
       command: ls /home
       register: home_users
 
     - name: Check if crontab exists for each user
       stat:
-        path: /var/spool/cron/crontabs/{{ item }}
+        path: "{{ crontab_dir }}/{{ item }}"
       register: user_crontab_stat
       loop: "{{ home_users.stdout_lines }}"
       changed_when: false
       no_log: true
+      loop_control:
+        loop_var: item
+
+#    - name: Debug user crontab stat results
+#      debug:
+#        msg: "User: {{ item }}, Stat Result: {{ user_crontab_stat.results[idx] }}"
+#      loop: "{{ home_users.stdout_lines }}"
+#      loop_control:
+#        loop_var: item
+#        index_var: idx
 
     - name: Mark users with crontabs
       set_fact:
         users_with_crontabs: "{{ users_with_crontabs + [item] }}"
-      when: user_crontab_stat.stat.exists
+      when: user_crontab_stat.results[idx].stat.exists
       loop: "{{ home_users.stdout_lines }}"
       loop_control:
         loop_var: item
+        index_var: idx
 
     - name: Summarize cron jobs for users with crontabs
       command: crontab -u {{ item }} -l
@@ -34,11 +51,20 @@
       ignore_errors: true
       loop: "{{ users_with_crontabs }}"
       changed_when: false
+      loop_control:
+        loop_var: item
 
-    - name: Get root user's cron jobs
-      command: sudo crontab -u root -l
-      register: root_crontab
+    - name: Check if crontab exists for root user
+      stat:
+        path: "{{ crontab_dir }}/{{ root_user }}"
+      register: root_crontab_stat
+      changed_when: false
+
+    - name: Summarize root user's cron jobs
+      command: crontab -u root -l
+      register: root_crontab_summary
       ignore_errors: true
+      when: root_crontab_stat.stat.exists
       changed_when: false
 
     - name: Get system-wide crontab
@@ -57,3 +83,5 @@
       ignore_errors: true
       loop: "{{ cron_d_files.stdout_lines }}"
       changed_when: false
+      loop_control:
+        loop_var: item
