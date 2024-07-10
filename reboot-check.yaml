@@ -4,31 +4,53 @@
   gather_facts: false
 
   tasks:
-    - name: Check systemd reboot status
-      ansible.builtin.command:
-        cmd: systemctl status reboot.target
-      register: reboot_status
-      ignore_errors: true
+    - name: Check for /var/run/reboot-required file
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
 
-    - name: Determine if reboot is required
+    - name: Check kernel version
+      ansible.builtin.command:
+        cmd: uname -r
+      register: current_kernel
+
+    - name: Check latest installed kernel version
+      ansible.builtin.command:
+        cmd: rpm -q --last kernel | head -n 1 | awk '{print $1}'
+      register: latest_kernel
+
+    - name: Determine if reboot is required due to reboot-required file
       ansible.builtin.debug:
-        msg: "A reboot is required"
-      when: "'inactive' not in reboot_status.stdout"
+        msg: "A reboot is required due to the presence of /var/run/reboot-required file"
+      when: reboot_required_file.stat.exists
+
+    - name: Determine if reboot is required due to kernel version mismatch
+      ansible.builtin.debug:
+        msg: "A reboot is required due to kernel version mismatch"
+      when: current_kernel.stdout != latest_kernel.stdout
 
     - name: Determine if reboot is not required
       ansible.builtin.debug:
         msg: "A reboot is NOT required"
-      when: "'inactive' in reboot_status.stdout"
+      when: not reboot_required_file.stat.exists and current_kernel.stdout == latest_kernel.stdout
 
     - name: Compile List of currently logged in users
       ansible.builtin.command:
         cmd: w
       register: users_status
 
-    - name: Schedule reboot in 5 minutes for servers requiring reboot
+    - name: Schedule reboot in 5 minutes for servers requiring reboot due to reboot-required file
       ansible.builtin.reboot:
         msg: "ATTENTION: this machine will reboot in 5 minutes to apply updates!"
         pre_reboot_delay: 360
         reboot_timeout: 600
       become: true
-      when: "'inactive' not in reboot_status.stdout"
+      when: reboot_required_file.stat.exists
+
+    - name: Schedule reboot in 5 minutes for servers requiring reboot due to kernel version mismatch
+      ansible.builtin.reboot:
+        msg: "ATTENTION: this machine will reboot in 5 minutes to apply updates!"
+        pre_reboot_delay: 360
+        reboot_timeout: 600
+      become: true
+      when: current_kernel.stdout != latest_kernel.stdout
