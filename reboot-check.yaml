@@ -36,6 +36,16 @@
         latest_kernel_normalized: "{{ latest_kernel.stdout.split('-')[0] }}"
       when: ansible_facts['os_family'] == 'Debian'
 
+    - name: Debug current kernel and latest installed kernel (Debian/Ubuntu)
+      ansible.builtin.debug:
+        msg: "Current kernel: {{ current_kernel_normalized }}, Latest installed kernel: {{ latest_kernel_normalized }}"
+      when: ansible_facts['os_family'] == 'Debian'
+
+    - name: Debug current kernel and latest installed kernel (RHEL)
+      ansible.builtin.debug:
+        msg: "Current kernel: {{ current_kernel.stdout.strip() }}, Latest installed kernel: {{ latest_kernel.stdout.strip() }}"
+      when: ansible_facts['os_family'] == 'RedHat'
+
     - name: Set fact if reboot is required
       set_fact:
         reboot_required: true
@@ -64,7 +74,7 @@
     - name: Schedule reboot in 5 minutes for servers requiring reboot
       ansible.builtin.reboot:
         msg: "ATTENTION: this machine will reboot in 5 minutes to apply updates!"
-        pre_reboot_delay: 30
+        pre_reboot_delay: 360
         reboot_timeout: 600
       become: true
       when: reboot_required | default(false)
