@@ -16,7 +16,7 @@
       when: ansible_facts['os_family'] == 'RedHat'
 
     - name: Get latest installed kernel version (Debian/Ubuntu)
-      ansible.builtin.shell: "dpkg -l 'linux-image-*' | grep '^ii' | awk '{print $3}' | sort -V | tail -n 1"
+      ansible.builtin.shell: "dpkg -l 'linux-image-*' | grep '^ii' | awk '{print $2}' | sort -V | tail -n 1"
       register: latest_kernel
       when: ansible_facts['os_family'] == 'Debian'
 
