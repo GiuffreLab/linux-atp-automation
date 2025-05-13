@@ -6,7 +6,7 @@
   tasks:
     - name: Get image SBOM
       ansible.builtin.shell:
-        cmd: syft {{ survey_image }} --scope all-layers --output /tmp/syft-scan.json
+        cmd: syft {{ survey_image }} --scope all-layers --file /tmp/syft-scan.json
       register: syft_output
 
     - name: Read output file
@@ -15,7 +15,7 @@
 
     - name: Get image Vulnerability Scan
       ansible.builtin.shell:
-        cmd: grype {{ survey_image }} --scope all-layers --output /tmp/grype-scan.json
+        cmd: grype {{ survey_image }} --scope all-layers --file /tmp/grype-scan.json
       register: syft_output
 
     - name: Read output file
