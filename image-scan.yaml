@@ -1,0 +1,11 @@
+---
+- name: Run Syft and Grype Test Commands
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Get image SBOM
+      ansible.builtin.shell: |
+        syft {{ survey_image }} --scope all-layers -o syft-json
+      register: syft_output
