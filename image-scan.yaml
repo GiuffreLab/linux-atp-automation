@@ -5,6 +5,6 @@
 
   tasks:
     - name: Get image SBOM
-      ansible.builtin.shell: |
-        syft {{ survey_image }} --scope all-layers -o syft-json
+      ansible.builtin.shell:
+        cmd: syft {{ survey_image }} --scope all-layers -o syft-json
       register: syft_output
