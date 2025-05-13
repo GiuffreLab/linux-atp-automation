@@ -19,10 +19,9 @@ def parse_syft_table(filepath):
     records = []
     with open(filepath, "r") as f:
         for line in f:
-            # Skip empty and header lines
+            # Skip empty lines and header line
             if not line.strip() or line.strip().startswith("NAME"):
                 continue
-            # Split by 2+ spaces
             parts = re.split(r'\s{2,}', line.strip())
             if len(parts) == 3:
                 records.append({
@@ -45,4 +44,22 @@ def parse_grype_json(filepath):
             "Package": artifact.get("name"),
             "Version": artifact.get("version"),
             "CVE": vuln.get("id"),
-            "Fixed In": vuln.get("fix", {}).get("versions", [""])[0] if vuln.get("fix") else
+            "Fixed In": vuln.get("fix", {}).get("versions", [""])[0] if vuln.get("fix") else "",
+            "Severity": vuln.get("severity"),
+            "Type": artifact.get("type")
+        })
+
+    df = pd.DataFrame(rows)
+    df["SeverityRank"] = df["Severity"].map(severity_sort_key)
+    return df.sort_values(by="SeverityRank").drop(columns="SeverityRank")
+
+def main():
+    df_sbom = parse_syft_table(sbom_txt_path)
+    df_vulns = parse_grype_json(grype_json_path)
+
+    with pd.ExcelWriter(output_excel_path, engine="xlsxwriter") as writer:
+        df_sbom.to_excel(writer, index=False, sheet_name="SBOM")
+        df_vulns.to_excel(writer, index=False, sheet_name="Vulnerabilities")
+
+if __name__ == "__main__":
+    main()
