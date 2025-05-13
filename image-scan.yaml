@@ -1,23 +1,38 @@
 ---
-- name: Run Syft and Grype Test Commands
+- name: Generate SBOM + Grype Excel Report using Pandas
   hosts: all
   gather_facts: false
+  vars:
+    image: "{{ survey_image }}"
+    sbom_output: "/tmp/syft.txt"
+    grype_output: "/tmp/grype.json"
+    final_excel: "/tmp/security-report.xlsx"
+    parser_script: "/tmp/sbom_and_grype_to_excel.py"
 
   tasks:
-    - name: Get image SBOM
-      ansible.builtin.shell:
-        cmd: syft {{ survey_image }} --scope all-layers --file /tmp/syft-scan.json
-      register: syft_output
+    - name: Copy pandas Excel generator script
+      ansible.builtin.copy:
+        src: sbom_and_grype_to_excel.py
+        dest: "{{ parser_script }}"
+        mode: '0755'
 
-    - name: Read output file
-      ansible.builtin.command:
-        cmd: cat /tmp/syft-scan.json
+    - name: Run Syft to generate SBOM
+      ansible.builtin.shell: syft {{ image }} --scope all-layers --output table > {{ sbom_output }}
+      changed_when: false
 
-    - name: Get image Vulnerability Scan
-      ansible.builtin.shell:
-        cmd: grype {{ survey_image }} --scope all-layers --file /tmp/grype-scan.json
-      register: syft_output
+    - name: Run Grype to generate vulnerability report
+      ansible.builtin.shell: grype {{ image }} --scope all-layers --output json > {{ grype_output }}
+      changed_when: false
 
-    - name: Read output file
-      ansible.builtin.command:
-        cmd: cat /tmp/grype-scan.json
+    - name: Build Excel report with Pandas
+      ansible.builtin.shell: python3 {{ parser_script }}
+      changed_when: false
+
+    - name: List report file details
+      ansible.builtin.command: ls -lh {{ final_excel }}
+      register: excel_file
+      changed_when: false
+
+    - name: Show Excel output path
+      ansible.builtin.debug:
+        msg: "✅ Report created at {{ final_excel }}: {{ excel_file.stdout }}"
