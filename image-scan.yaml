@@ -2,7 +2,6 @@
 - name: Run Syft and Grype Test Commands
   hosts: all
   gather_facts: false
-  become: true
 
   tasks:
     - name: Get image SBOM
